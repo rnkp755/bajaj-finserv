@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Loader2, Send, RefreshCw, Check } from "lucide-react";
 import axios from "axios";
 import { SERVER_URL } from "../constant.js";
@@ -51,6 +51,7 @@ function App() {
 				}
 			} catch (error) {
 				alert("Invalid JSON input! Please correct it.");
+				console.error("JSON Parse Error:", error);
 				setLoading(false);
 				return;
 			}
