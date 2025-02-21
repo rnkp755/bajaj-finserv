@@ -1,1 +1,1 @@
-export const SERVER_URL = "http://localhost:3000/bfhl";
+export const SERVER_URL = "https://bajaj-finserv-ityl.onrender.com/bfhl";

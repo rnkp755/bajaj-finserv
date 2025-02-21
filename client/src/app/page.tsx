@@ -31,14 +31,9 @@ function App() {
 	);
 	const [loading, setLoading] = useState(false);
 	const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null);
-	const [formattedResponse, setFormattedResponse] = useState<string>("");
 	const [selectedFields, setSelectedFields] = useState<string[]>(
 		POST_FIELDS.map((f) => f.id)
 	);
-
-	useEffect(() => {
-		setFormattedResponse("By default, all fields are selected.");
-	}, []);
 
 	const handleRequest = async (method: "GET" | "POST") => {
 		setLoading(true);
@@ -60,49 +55,17 @@ function App() {
 				return;
 			}
 
-			console.log(parsedInput);
-
 			if (method === "POST") {
 				const apiResponse = await axios.post(
 					SERVER_URL,
 					parsedInput
 				);
-				const response: ApiResponse = apiResponse.data;
-				setApiResponse(response);
-
-				// Generate formatted text output for selected fields
-				const formattedText = selectedFields
-					.map((field) => {
-						if (response[field as keyof ApiResponse]) {
-							const value =
-								response[
-									field as keyof ApiResponse
-								];
-							return `${
-								POST_FIELDS.find(
-									(f) => f.id === field
-								)?.label
-							}: ${
-								Array.isArray(value)
-									? value.join(", ")
-									: value
-							}`;
-						}
-						return null;
-					})
-					.filter(Boolean)
-					.join("\n");
-
-				setFormattedResponse(
-					formattedText || "No fields selected."
-				);
+				setApiResponse(apiResponse.data);
 			} else {
 				setApiResponse({ operation_code: 1 });
-				setFormattedResponse("Operation Code: 1");
 			}
 		} catch (error) {
 			console.error("API Error:", error);
-			setFormattedResponse("Failed to fetch response.");
 		} finally {
 			setLoading(false);
 		}
@@ -116,8 +79,23 @@ function App() {
 		);
 	};
 
+	const getFilteredResponse = () => {
+		if (!apiResponse) return "By default, all fields are selected.";
+		return Object.entries(apiResponse)
+			.filter(([key]) => selectedFields.includes(key))
+			.map(([key, value]) => {
+				const label =
+					POST_FIELDS.find((f) => f.id === key)?.label ||
+					key;
+				return `${label}: ${
+					Array.isArray(value) ? value.join(", ") : value
+				}`;
+			})
+			.join("\n");
+	};
+
 	return (
-		<div className="min-h-screen bg-slate-900 text-white p-6 flex">
+		<div className="min-h-screen bg-slate-900 text-white p-6 flex gap-6">
 			{/* Left Section (Forms) */}
 			<div className="w-1/2 space-y-8">
 				{/* GET Request Section */}
@@ -128,9 +106,7 @@ function App() {
 					<button
 						onClick={() => handleRequest("GET")}
 						disabled={loading}
-						className="flex items-center gap-2 px-6 py-3 bg-blue-600 rounded-lg
-                     hover:bg-blue-700 transition-colors disabled:opacity-50
-                     disabled:cursor-not-allowed"
+						className="flex items-center gap-2 px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{loading ? (
 							<Loader2
@@ -202,9 +178,7 @@ function App() {
 					<button
 						onClick={() => handleRequest("POST")}
 						disabled={loading}
-						className="flex items-center gap-2 px-6 py-3 bg-blue-600 rounded-lg
-                     hover:bg-blue-700 transition-colors disabled:opacity-50
-                     disabled:cursor-not-allowed"
+						className="flex items-center gap-2 px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{loading ? (
 							<Loader2
@@ -226,7 +200,7 @@ function App() {
 						Response
 					</h2>
 					<pre className="font-mono text-sm whitespace-pre-wrap">
-						{formattedResponse}
+						{getFilteredResponse()}
 					</pre>
 				</div>
 			</div>
