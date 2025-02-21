@@ -1,5 +1,5 @@
 import asyncHandler from "../utils/AsyncHandler.js";
-import { APIError } from "../utils/ApiError.js";
+import { APIError } from "../utils/APIError.js";
 
 const handlePost = asyncHandler(async (req, res) => {
 	// Controller to handle request
