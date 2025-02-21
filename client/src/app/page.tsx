@@ -26,44 +26,46 @@ const POST_FIELDS = [
 ];
 
 function App() {
-	const [inputText, setInputText] = useState(
-		'{"data": ["M", "1", "334", "4", "B", "P"]}'
-	);
+	const [inputText, setInputText] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null);
 	const [selectedFields, setSelectedFields] = useState<string[]>(
 		POST_FIELDS.map((f) => f.id)
 	);
+	const [isPostResponse, setIsPostResponse] = useState(false);
 
 	const handleRequest = async (method: "GET" | "POST") => {
 		setLoading(true);
 		try {
-			let parsedInput;
-			try {
-				parsedInput = JSON.parse(inputText);
-				if (
-					!parsedInput.data ||
-					!Array.isArray(parsedInput.data)
-				) {
-					throw new Error(
-						"Invalid JSON format. 'data' should be an array."
-					);
-				}
-			} catch (error) {
-				alert("Invalid JSON input! Please correct it.");
-				console.error("JSON Parse Error:", error);
-				setLoading(false);
-				return;
-			}
-
 			if (method === "POST") {
-				const apiResponse = await axios.post(
+				let parsedInput;
+				try {
+					parsedInput = JSON.parse(inputText);
+					if (
+						!parsedInput.data ||
+						!Array.isArray(parsedInput.data)
+					) {
+						throw new Error(
+							"Invalid JSON format. 'data' should be an array."
+						);
+					}
+				} catch (error) {
+					alert("Invalid JSON input! Please correct it.");
+					console.error("JSON Parse Error:", error);
+					setLoading(false);
+					return;
+				}
+
+				const response = await axios.post(
 					SERVER_URL,
 					parsedInput
 				);
-				setApiResponse(apiResponse.data);
+				setApiResponse(response.data);
+				setIsPostResponse(true);
 			} else {
-				setApiResponse({ operation_code: 1 });
+				const response = await axios.get(SERVER_URL);
+				setApiResponse(response.data || { operation_code: 1 });
+				setIsPostResponse(false);
 			}
 		} catch (error) {
 			console.error("API Error:", error);
@@ -81,7 +83,16 @@ function App() {
 	};
 
 	const getFilteredResponse = () => {
-		if (!apiResponse) return "By default, all fields are selected.";
+		if (!apiResponse) return "No response yet.";
+
+		if (!isPostResponse) {
+			// Show only "Operation Code: X" for GET response
+			return `Operation Code: ${
+				apiResponse.operation_code ?? "Unknown"
+			}`;
+		}
+
+		// Filtered response for POST request
 		return Object.entries(apiResponse)
 			.filter(([key]) => selectedFields.includes(key))
 			.map(([key, value]) => {
@@ -142,7 +153,8 @@ function App() {
 					{/* Field Selection */}
 					<div className="space-y-2">
 						<h3 className="text-sm font-medium text-slate-300">
-							Select fields to display:
+							Select fields to display (Only for
+							POST Response):
 						</h3>
 						<div className="flex flex-wrap gap-2">
 							{POST_FIELDS.map((field) => (
